@@ -8,21 +8,30 @@ on:
       - 'README.md'
       - '**/*.md'     
       - '**/*.txt'
-      - '**/*.gitignore'
-      - '.github/workflows/docker-image.yml'     
+      - '**/*.gitignore'  
 
 jobs:
   build-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Bắt buộc: Cấp quyền push image vào GitHub Packages
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
+      # GHCR bắt buộc tên image viết thường 100%, bước này đảm bảo không bị lỗi cú pháp
+      - name: Set lowercase repository owner
+        run: |
+          echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/bookstore" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # Tự sinh, không cần tạo secret thủ công
 
       - name: Build and Push
         uses: docker/build-push-action@v5
@@ -30,7 +39,9 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/bookstore:tagname
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
       
       - name: Trigger Render Deploy
         run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
