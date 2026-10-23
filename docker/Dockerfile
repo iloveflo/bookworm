@@ -1,4 +1,4 @@
-FROM php:8.4-fpm
+FROM php:8.4.27-fpm
 
 # 1. Cài đặt các thư viện hệ thống và Nginx
 RUN apt-get update && apt-get install -y \

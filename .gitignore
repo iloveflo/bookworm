@@ -24,3 +24,9 @@ Thumbs.db
 *.log
 /storage/logs/
 /storage/cache/
+
+.agent_context/
+AGENTS.md
+repomix.config.json
+.serena/
+deploy_push_image_len_dockerhub.yml
